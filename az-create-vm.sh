@@ -12,12 +12,12 @@ function server_location {
     echo ""
     read -p "Select your option:" ans
     case $ans in
-        1  )  clear; echo "East US Region Selected"; echo eastus > location; echo westus > paired;;
-        2  )  clear; echo "West US Region Selected"; echo westus > location; echo eastus > paired;;
-        3  )  clear; echo "Australia East Region Selected"; echo australiaeast > location; echo australiasoutheast > paired;;
+        1  )  clear; echo "East US Region Selected"; echo eastus > location; echo centralus > paired;;
+        2  )  clear; echo "West US Region Selected"; echo westus > location; echo northcentralus > paired;;
+        3  )  clear; echo "Australia East Region Selected"; echo australiaeast > location; echo australiaeast > paired;;
         4  )  clear; echo "West Europe Region Selected"; echo westeurope > location; echo northeurope > paired;;
-        5  )  clear; echo "Germany Region Selected"; echo germany > location; echo germanynorth > paired;;
-        6  )  clear; echo "Canada Region Selected"; echo canada > location; echo canadaeast > paired;;
+        5  )  clear; echo "Germany Region Selected"; echo germany > location; echo westeurope > paired;;
+        6  )  clear; echo "Canada Region Selected"; echo canada > location; echo canadacentral > paired;;
         "" )  clear; echo "None selected"; sleep 1; server_location;;
         *  )  clear; echo "Invalid option entered"; sleep 1; server_location;;
     esac
@@ -60,11 +60,6 @@ function check_web_app {
     echo $web/metrics > site
 }
 
-function check_vm {
-    echo "⌛  Checking Previous VM..."
-    az vm list-ip-addresses -n myVM --output tsv > IP.txt
-    [ -s IP.txt ] && bash -c "echo You Already Have Running VM... && az vm list-ip-addresses -n myVM --output table" && goto ask
-}
 
 function create_vnet {
     az network vnet create --resource-group $rs --location $location --name myVNet --address-prefixes 10.0.0.0/16 2404:f800:8000:122::/63 --subnet-name myBackendSubnet --subnet-prefixes 10.0.0.0/24 2404:f800:8000:122::/64
@@ -111,6 +106,18 @@ function finalize_setup {
     
     timeout 10s az vm run-command invoke --command-id RunPowerShellScript --name myVM -g $rs --scripts "cd C:\PerfLogs ; cmd /c curl -L -s -k -O https://raw.githubusercontent.com/kmille36/thuonghai/master/katacoda/AZ/alive.bat ; (gc alive.bat) -replace 'URLH', '$URL' | Out-File -encoding ASCII alive.bat ; (gc alive.bat) -replace 'CF', '$CF' | Out-File -encoding ASCII alive.bat ; cmd /c curl -L -s -k -O https://raw.githubusercontent.com/kmille36/thuonghai/master/katacoda/AZ/config.json ; (gc config.json) -replace 'CF', '$CF' | Out-File -encoding ASCII config.json ; cmd /c curl -L -k -O https://raw.githubusercontent.com/kmille36/thuonghai/master/katacoda/AZ/internet.bat ; cmd /c internet.bat" --out table
     
+    rm -rf location
+    rm -rf image
+    rm -rf paired
+    rm -rf size
+    rm -rf CF
+    rm -rf CF2
+    rm -rf IP.txt
+    rm -rf rs
+    rm -rf webapp.sh
+    rm -rf number
+    rm -rf site
+    
     echo "Your RDP is READY TO USE !!! "
 }
 
@@ -133,6 +140,72 @@ function ping_cf {
     if [ -s CF2 ]; then rdp_info; else echo -en "\r Checking .     $i 🌐 ";sleep 0.1;echo -en "\r Checking ..    $i 🌐 ";sleep 0.1;echo -en "\r Checking ...   $i 🌐 ";sleep 0.1;echo -en "\r Checking ....  $i 🌐 ";sleep 0.1;echo -en "\r Checking ..... $i 🌐 ";sleep 0.1;echo -en "\r Checking     . $i 🌐 ";sleep 0.1;echo -en "\r Checking  .... $i 🌐 ";sleep 0.1;echo -en "\r Checking   ... $i 🌐 ";sleep 0.1;echo -en "\r Checking    .. $i 🌐 ";sleep 0.1;echo -en "\r Checking     . $i 🌐 ";sleep 0.1 && ping_cf; fi
 }
 
+
+function existing_vm {
+    echo "Do you want to keep current VM?"
+    echo "y: Keep current VM states and output RDP File"
+    echo "n: Delete previous VM then re-create new one"
+    while true
+    do
+        read -r -p "Press [y/n] then enter: " input
+        case $input in
+            [yY][eE][sS]|[yY])
+                ping_cf
+                break
+            ;;
+            [nN][oO]|[nN])
+                echo "Deleting Virtual Machine..."
+                rs=$(cat rs)
+                
+                # Removing App Service Plan
+                app=$(az appservice plan list --query "[].name" -o tsv)
+                az appservice plan delete --name $app --resource-group $rs
+                
+                # Removing Web App
+                web=$(az webapp list --query "[].repositorySiteName" --output tsv)
+                az webapp delete --name $web --resource-group $rs
+                
+                # Removing public IP addresses
+                az network public-ip delete -g $rs -n myPublicIP-Ipv4
+                az network public-ip delete -g $rs -n myPublicIP-Ipv6
+                
+                # Removing Virtual Network
+                az network vnet delete -g $rs -n myVNet
+                
+                # Removing Network Security Group Rules
+                az network nsg rule delete -g $rs --nsg-name MyNsg -n myNSGRuleSSH
+                az network nsg rule delete -g $rs --nsg-name MyNsg -n myNSGRuleRDP
+                az network nsg rule delete -g $rs --nsg-name MyNsg -n myNSGRuleAllOUT
+                
+                # Removing Network Security Group
+                az network nsg delete -g $rs -n myNSG
+                
+                # Removing IPv6 Config
+                az network nic ip-config delete -g $rs -n myIPv6config --nic-name myNIC1
+                
+                # Removing virtual machine
+                az vm delete -g $rs -n myVM --yes
+                
+                # Removing Network Interface
+                az network nic delete -g $rs -n myNIC1
+                
+                echo "Remove success!"
+                configure_resource
+                break
+            ;;
+            *)
+                echo "Invalid input..."
+            ;;
+        esac
+    done
+}
+
+function check_vm {
+    echo "⌛  Checking Previous VM..."
+    az vm list-ip-addresses -n myVM --output tsv > IP.txt
+    [ -s IP.txt ] && bash -c "echo You Already Have Running VM... && az vm list-ip-addresses -n myVM --output table" && existing_vm
+}
+
 function configure_resource {
     az group list | jq -r '.[0].name' > rs
     rs=$(cat rs)
@@ -146,10 +219,10 @@ function configure_resource {
     location=$(cat location)
     paired=$(cat paired)
     
-    echo "az appservice plan create --name myAppServicePlan$NUMBER$NUMBER --resource-group $rs --location $paired --sku F1 --is-linux --output none && az webapp create --resource-group $rs --plan myAppServicePlan$NUMBER$NUMBER --name haivm$NUMBER$NUMBER --deployment-container-image-name docker.io/thuonghai2711/v2ray-azure-web:latest --output none" > webapp.sh
-    nohup bash webapp.sh  &>/dev/null &
+    echo "az appservice plan create --name myAppServicePlan$NUMBER$NUMBER --resource-group $rs --location $paired --sku F1 --is-linux && az webapp create --resource-group $rs --plan myAppServicePlan$NUMBER$NUMBER --name haivm$NUMBER$NUMBER --deployment-container-image-name docker.io/thuonghai2711/v2ray-azure-web:latest" > webapp.sh
+    bash webapp.sh
     
-    #check_vm
+    check_vm
 }
 
 # Start process by setting up required Azure VM details
@@ -205,7 +278,7 @@ clear
 echo "Creating network interface..."
 create_network_interface
 
-#Create IPv6 configuration
+# Create IPv6 configuration
 sleep 1s
 clear
 echo "Creating IPv6 IP configuration..."
