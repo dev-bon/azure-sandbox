@@ -56,7 +56,7 @@ function server_size {
 }
 
 function create_vnet {
-    az network vnet create --resource-group $rs --location $location --name myVNet --address-prefixes 10.0.0.0/16 2404:f800:8000:122::/63 --subnet-name myBackendSubnet --subnet-prefixes 10.0.0.0/24 2404:f800:8000:122::/64
+    az network vnet create --resource-group $rs --location $location --name myVNet --address-prefixes 10.0.0.0/16 fd18:2885:e639::/48 --subnet-name myBackendSubnet --subnet-prefixes 10.0.0.0/24 fd18:2885:e639:0::/64
 }
 
 function create_public_ip {
@@ -118,6 +118,9 @@ function finalize_setup {
 function rdp_info {
     az vm open-port --resource-group $rs --name myVM --port '*'
     
+    sleep 1s
+    clear
+    
     IP=$(az vm show -d -g $rs -n myVM --query publicIps -o tsv)
     echo "Public IP: $IP"
     echo "Username: azureuser"
@@ -167,7 +170,7 @@ function existing_vm {
                 
                 # Removing IPv6 Config
                 echo "Removing IPv6 Config..."
-                az network nic ip-config delete -g $rs -n myIPv6config --nic-name myNIC1
+                #az network nic ip-config delete -g $rs -n myIPv6config --nic-name myNIC1
                 
                 # Removing Network Interface
                 echo "Removing Network Interface..."
@@ -306,9 +309,9 @@ echo "Pinging Cloudflare..."
 ping_cf
 
 # Show Created VM RDP Info
-sleep 1s
-clear
-rdp_info
+# sleep 1s
+# clear
+# rdp_info
 
 # Finalize and run shell script command
 sleep 1s
