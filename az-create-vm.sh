@@ -55,12 +55,6 @@ function server_size {
     esac
 }
 
-function check_web_app {
-    web=$(az webapp list --query "[].{hostName: defaultHostName, state: state}" --output tsv | grep haivm | cut -f 1)
-    echo $web/metrics > site
-}
-
-
 function create_vnet {
     az network vnet create --resource-group $rs --location $location --name myVNet --address-prefixes 10.0.0.0/16 2404:f800:8000:122::/63 --subnet-name myBackendSubnet --subnet-prefixes 10.0.0.0/24 2404:f800:8000:122::/64
 }
@@ -204,6 +198,12 @@ function check_vm {
     echo "⌛  Checking Previous VM..."
     az vm list-ip-addresses -n myVM --output tsv > IP.txt
     [ -s IP.txt ] && bash -c "echo You Already Have Running VM... && az vm list-ip-addresses -n myVM --output table" && existing_vm
+}
+
+function check_web_app {
+    web=$(az webapp list --query "[].{hostName: defaultHostName, state: state}" --output tsv | grep haivm | cut -f 1)
+    echo $web/metrics > site
+    check_vm
 }
 
 function configure_resource {
