@@ -148,42 +148,51 @@ function existing_vm {
                 break
             ;;
             [nN][oO]|[nN])
-                echo "Deleting Virtual Machine..."
+                echo "Reverting resources..."
                 rs=$(cat rs)
                 
-                # Removing App Service Plan
-                app=$(az appservice plan list --query "[].name" -o tsv)
-                az appservice plan delete --name $app --resource-group $rs
-                
                 # Removing Web App
+                echo "Removing Web App..."
                 web=$(az webapp list --query "[].repositorySiteName" --output tsv)
                 az webapp delete --name $web --resource-group $rs
                 
-                # Removing public IP addresses
-                az network public-ip delete -g $rs -n myPublicIP-Ipv4
-                az network public-ip delete -g $rs -n myPublicIP-Ipv6
+                # Removing App Service Plan
+                echo "Removing App Service Plan..."
+                app=$(az appservice plan list --query "[].name" -o tsv)
+                az appservice plan delete --name $app --resource-group $rs --yes
                 
-                # Removing Virtual Network
-                az network vnet delete -g $rs -n myVNet
+                # Removing virtual machine
+                echo "Removing Virtual Machine..."
+                az vm delete -g $rs -n myVM --yes
+                
+                # Removing IPv6 Config
+                echo "Removing IPv6 Config..."
+                az network nic ip-config delete -g $rs -n myIPv6config --nic-name myNIC1
+                
+                # Removing Network Interface
+                echo "Removing Network Interface..."
+                az network nic delete -g $rs -n myNIC1
                 
                 # Removing Network Security Group Rules
+                echo "Removing Network Security Group Rules..."
                 az network nsg rule delete -g $rs --nsg-name MyNsg -n myNSGRuleSSH
                 az network nsg rule delete -g $rs --nsg-name MyNsg -n myNSGRuleRDP
                 az network nsg rule delete -g $rs --nsg-name MyNsg -n myNSGRuleAllOUT
                 
                 # Removing Network Security Group
+                echo "Removing Network Security Group..."
                 az network nsg delete -g $rs -n myNSG
                 
-                # Removing IPv6 Config
-                az network nic ip-config delete -g $rs -n myIPv6config --nic-name myNIC1
+                # Removing public IP addresses
+                echo "Removing public IP addresses..."
+                az network public-ip delete -g $rs -n myPublicIP-Ipv4
+                az network public-ip delete -g $rs -n myPublicIP-Ipv6
                 
-                # Removing virtual machine
-                az vm delete -g $rs -n myVM --yes
+                # Removing Virtual Network
+                echo "Removing Virtual Network..."
+                az network vnet delete -g $rs -n myVNet
                 
-                # Removing Network Interface
-                az network nic delete -g $rs -n myNIC1
-                
-                echo "Remove success!"
+                echo "Configuring Azure sandbox resource group..."
                 configure_resource
                 break
             ;;
