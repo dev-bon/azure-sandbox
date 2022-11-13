@@ -151,72 +151,73 @@ function configure_resource {
 
 # Start process by setting up required Azure VM details
 
-# Set Azure VM server location
 sleep 1s
 clear
+echo "Set Azure VM server location..."
 server_location
 
-# Set Azure VM server image
 sleep 1s
 clear
+echo "Set Azure VM server image..."
 server_image
 
-# Set Azure VM server size
 sleep 1s
 clear
+echo "Set Azure VM server size..."
 server_size
 
-# Configure Sandbox Azure resource group
 sleep 1s
 clear
+echo "Configure Sandbox Azure resource group..."
 configure_resource
 
-# Create a dual stack virtual network
 sleep 1s
 clear
+echo "Create a dual stack virtual network..."
 create_vnet
 
-# Create public IP addresses
 sleep 1s
 clear
+echo "Create public IP addresses..."
 create_public_ip
 
-# Create a network security group
 sleep 1s
 clear
+echo "Create a network security group..."
 create_network_sg
 
-# Create network security group rules
 sleep 1s
 clear
+echo "Create network security group rules..."
 create_network_sg_rules
 
-# Create network interface
 sleep 1s
 clear
+echo "Create network interface..."
 create_network_interface
 
-# Create IPv6 IP configuration
 sleep 1s
 clear
+echo "Create IPv6 IP configuration..."
 create_ipv6_config
 
-# Create virtual machine
 sleep 1s
 clear
+echo "Create virtual machine..."
 create_vm
 
-# Ping Cloudflare
 sleep 1s
 clear
+echo "Ping Cloudflare..."
 ping_cf
 
-# Show Created VM RDP Info
 sleep 1s
 clear
+echo "Show Created VM RDP Info..."
 rdp_info
 
-# Finalizing setup
+
 sleep 1s
 clear
+echo "Finalizing setup..."
 finalize_setup
