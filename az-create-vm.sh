@@ -55,7 +55,7 @@ function server_size {
     esac
 }
 
-function check_web_app{
+function check_web_app {
     web=$(az webapp list --query "[].{hostName: defaultHostName, state: state}" --output tsv | grep haivm | cut -f 1)
     echo $web/metrics > site
 }
@@ -65,20 +65,20 @@ function check_vm {
     az vm list-ip-addresses -n Windows-VM-PLUS --output tsv > IP.txt
 }
 
-function create_vnet{
+function create_vnet {
     az network vnet create --resource-group $rs --location $location --name myVNet --address-prefixes 10.0.0.0/16 2404:f800:8000:122::/63 --subnet-name myBackendSubnet --subnet-prefixes 10.0.0.0/24 2404:f800:8000:122::/64
 }
 
-function create_public_ip{
+function create_public_ip {
     az network public-ip create --resource-group $rs --location $location --name myPublicIP-Ipv4 --sku Standard --version IPv4 --zone 1
     az network public-ip create --resource-group $rs --location $location --name myPublicIP-Ipv6 --sku Standard --version IPv6 --zone 1
 }
 
-function create_network_sg{
+function create_network_sg {
     az network nsg create --resource-group $rs --location $location --name myNSG
 }
 
-function create_network_sg_rules{
+function create_network_sg_rules {
     az network nsg rule create --resource-group $rs --nsg-name myNSG --name myNSGRuleSSH --protocol '*' --direction inbound --source-address-prefix '*' --source-port-range '*' --destination-address-prefix '*' --destination-port-range 22 --access allow --priority 200
     
     az network nsg rule create --resource-group $rs --nsg-name myNSG --name myNSGRuleRDP --protocol '*' --direction inbound --source-address-prefix '*' --source-port-range '*' --destination-address-prefix '*' --destination-port-range 3389 --access allow --priority 200
@@ -86,22 +86,22 @@ function create_network_sg_rules{
     az network nsg rule create --resource-group $rs --nsg-name myNSG --name myNSGRuleAllOUT --protocol '*' --direction outbound --source-address-prefix '*' --source-port-range '*' --destination-address-prefix '*' --destination-port-range '*' --access allow --priority 200
 }
 
-function create_network_interface{
+function create_network_interface {
     az network nic create --resource-group $rs --location $location --name myNIC1 --vnet-name myVNet --subnet myBackEndSubnet --network-security-group myNSG --public-ip-address myPublicIP-IPv4
 }
 
-function create_ipv6_config{
+function create_ipv6_config {
     az network nic ip-config create --resource-group $rs --name myIPv6config --nic-name myNIC1 --private-ip-address-version IPv6 --vnet-name myVNet --subnet myBackendSubnet --public-ip-address myPublicIP-IPv6
 }
 
-function create_vm{
+function create_vm {
     image=$(cat image)
     size=$(cat size)
     
     az vm create --resource-group $rs --location $location --name myVM --nics myNIC1 --public-ip-sku Standard --size $size --image $image --admin-username azureuser --admin-password WindowsPassword@001 --nic-delete-option delete --os-disk-delete-option delete --out table
 }
 
-function finalize_setup{
+function finalize_setup {
     CF=$(curl -s --connect-timeout 5 --max-time 5 $URL | grep -Eo "(http|https)://[a-zA-Z0-9./?=_%:-]*" | sort -u | sed s/'http[s]\?:\/\/'//)
     echo -n $CF > CF
     cat CF | grep trycloudflare.com > CF2
@@ -113,7 +113,7 @@ function finalize_setup{
     echo "Your RDP is READY TO USE !!! "
 }
 
-function rdp_info{
+function rdp_info {
     IP=$(az vm show -d -g $rs -n myVM --query publicIps -o tsv)
     echo "Public IP: $IP"
     echo "Username: azureuser"
@@ -122,7 +122,7 @@ function rdp_info{
     echo "🖥️  Run Command Setup Internet In Process... (10s)"
 }
 
-function ping_cf{
+function ping_cf {
     URL=$(cat site)
     CF=$(curl -s --connect-timeout 5 --max-time 5 $URL | grep -Eo "(http|https)://[a-zA-Z0-9./?=_%:-]*" | sort -u | sed s/'http[s]\?:\/\/'//)
     echo -n $CF > CF
