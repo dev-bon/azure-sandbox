@@ -31,8 +31,8 @@ function server_image {
     echo ""
     read -p "Select your option:" ans
     case $ans in
-        1  )  clear; echo "Windows 11 Pro Image Selected"; echo win11-22h2-pro > image;;
-        2  )  clear; echo "Windows 10 Pro Image Selected"; echo win10-22h2-pro > image;;
+        1  )  clear; echo "Windows 11 Pro Image Selected"; echo MicrosoftWindowsDesktop:windows-11:win11-22h2-pro:latest > image;;
+        2  )  clear; echo "Windows 10 Pro Image Selected"; echo MicrosoftWindowsDesktop:Windows-10:win10-22h2-pro:latest > image;;
         "" )  clear; echo "None selected"; sleep 1; server_image;;
         *  )  clear; echo "Invalid option entered"; sleep 1; server_image;;
     esac
@@ -62,7 +62,8 @@ function check_web_app {
 
 function check_vm {
     echo "⌛  Checking Previous VM..."
-    az vm list-ip-addresses -n Windows-VM-PLUS --output tsv > IP.txt
+    az vm list-ip-addresses -n myVM --output tsv > IP.txt
+    [ -s IP.txt ] && bash -c "echo You Already Have Running VM... && az vm list-ip-addresses -n myVM --output table" && goto ask
 }
 
 function create_vnet {
@@ -81,7 +82,7 @@ function create_network_sg {
 function create_network_sg_rules {
     az network nsg rule create --resource-group $rs --nsg-name myNSG --name myNSGRuleSSH --protocol '*' --direction inbound --source-address-prefix '*' --source-port-range '*' --destination-address-prefix '*' --destination-port-range 22 --access allow --priority 200
     
-    az network nsg rule create --resource-group $rs --nsg-name myNSG --name myNSGRuleRDP --protocol '*' --direction inbound --source-address-prefix '*' --source-port-range '*' --destination-address-prefix '*' --destination-port-range 3389 --access allow --priority 200
+    az network nsg rule create --resource-group $rs --nsg-name myNSG --name myNSGRuleRDP --protocol '*' --direction inbound --source-address-prefix '*' --source-port-range '*' --destination-address-prefix '*' --destination-port-range 3389 --access allow --priority 201
     
     az network nsg rule create --resource-group $rs --nsg-name myNSG --name myNSGRuleAllOUT --protocol '*' --direction outbound --source-address-prefix '*' --source-port-range '*' --destination-address-prefix '*' --destination-port-range '*' --access allow --priority 200
 }
