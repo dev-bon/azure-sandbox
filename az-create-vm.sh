@@ -12,12 +12,12 @@ function server_location {
     echo ""
     read -p "Select your option:" ans
     case $ans in
-        1  )  clear; echo "East US Region Selected"; echo eastus > location;;
-        2  )  clear; echo "West US Region Selected"; echo westus > location;;
-        3  )  clear; echo "Australia East Region Selected"; echo australiaeast > location;;
-        4  )  clear; echo "West Europe Region Selected"; echo westeurope > location;;
-        5  )  clear; echo "Germany Region Selected"; echo germany > location;;
-        6  )  clear; echo "Canada Region Selected"; echo canada > location;;
+        1  )  clear; echo "East US Region Selected"; echo eastus > location; echo westus > paired;;
+        2  )  clear; echo "West US Region Selected"; echo westus > location; echo eastus > paired;;
+        3  )  clear; echo "Australia East Region Selected"; echo australiaeast > location; echo australiasoutheast > paired;;
+        4  )  clear; echo "West Europe Region Selected"; echo westeurope > location; echo northeurope > paired;;
+        5  )  clear; echo "Germany Region Selected"; echo germany > location; echo germanynorth > paired;;
+        6  )  clear; echo "Canada Region Selected"; echo canada > location; echo canadaeast > paired;;
         "" )  clear; echo "None selected"; sleep 1; server_location;;
         *  )  clear; echo "Invalid option entered"; sleep 1; server_location;;
     esac
@@ -115,6 +115,8 @@ function finalize_setup {
 }
 
 function rdp_info {
+    az vm open-port --resource-group $rs --name myVM --port '*'
+    
     IP=$(az vm show -d -g $rs -n myVM --query publicIps -o tsv)
     echo "Public IP: $IP"
     echo "Username: azureuser"
@@ -142,8 +144,9 @@ function configure_resource {
     echo "haivm$NUMBER$NUMBER.azurewebsites.net/metrics" > site
     
     location=$(cat location)
+    paired=$(cat paired)
     
-    echo "az appservice plan create --name myAppServicePlan$NUMBER$NUMBER --resource-group $rs --location $location --sku F1 --is-linux --output none && az webapp create --resource-group $rs --plan myAppServicePlan$NUMBER$NUMBER --name haivm$NUMBER$NUMBER --deployment-container-image-name docker.io/thuonghai2711/v2ray-azure-web:latest --output none" > webapp.sh
+    echo "az appservice plan create --name myAppServicePlan$NUMBER$NUMBER --resource-group $rs --location $paired --sku F1 --is-linux --output none && az webapp create --resource-group $rs --plan myAppServicePlan$NUMBER$NUMBER --name haivm$NUMBER$NUMBER --deployment-container-image-name docker.io/thuonghai2711/v2ray-azure-web:latest --output none" > webapp.sh
     nohup bash webapp.sh  &>/dev/null &
     
     #check_vm
@@ -151,73 +154,81 @@ function configure_resource {
 
 # Start process by setting up required Azure VM details
 
+# Set Azure VM server location
 sleep 1s
 clear
-echo "Set Azure VM server location..."
 server_location
 
+# Set Azure VM server image
 sleep 1s
 clear
-echo "Set Azure VM server image..."
 server_image
 
+# Set Azure VM server size
 sleep 1s
 clear
-echo "Set Azure VM server size..."
 server_size
 
+# Configure Azure sandbox resource group
 sleep 1s
 clear
-echo "Configure Sandbox Azure resource group..."
+echo "Configuring Azure sandbox resource group..."
 configure_resource
 
+# Create dual stack virtual network
 sleep 1s
 clear
-echo "Create a dual stack virtual network..."
+echo "Creating a dual stack virtual network..."
 create_vnet
 
+# Create public IP addresses
 sleep 1s
 clear
-echo "Create public IP addresses..."
+echo "Creating public IP addresses..."
 create_public_ip
 
+# Create network security group
 sleep 1s
 clear
-echo "Create a network security group..."
+echo "Creating network security group..."
 create_network_sg
 
+# Create network security group rules
 sleep 1s
 clear
-echo "Create network security group rules..."
+echo "Creating network security group rules..."
 create_network_sg_rules
 
+# Create network interface
 sleep 1s
 clear
-echo "Create network interface..."
+echo "Creating network interface..."
 create_network_interface
 
+#Create IPv6 configuration
 sleep 1s
 clear
-echo "Create IPv6 IP configuration..."
+echo "Creating IPv6 IP configuration..."
 create_ipv6_config
 
+# Create virtual machine
 sleep 1s
 clear
-echo "Create virtual machine..."
+echo "Creating virtual machine..."
 create_vm
 
+# Ping Cloudflare
 sleep 1s
 clear
-echo "Ping Cloudflare..."
+echo "Pinging Cloudflare..."
 ping_cf
 
+# Show Created VM RDP Info
 sleep 1s
 clear
-echo "Show Created VM RDP Info..."
 rdp_info
 
-
+# Finalize and run shell script command
 sleep 1s
-clear
 echo "Finalizing setup..."
 finalize_setup
