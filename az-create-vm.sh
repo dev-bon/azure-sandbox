@@ -56,7 +56,7 @@ function server_size {
 }
 
 function create_vnet {
-    az network vnet create --resource-group $rs --location $location --name myVNet --address-prefixes 10.0.0.0/16 fd18:2885:e639::/48 --subnet-name myBackendSubnet --subnet-prefixes 10.0.0.0/24 fd18:2885:e639:0::/64
+    az network vnet create --resource-group $rs --location $location --name myVNet --address-prefixes 10.0.0.0/16 fd18:2885:e639::/48 --subnet-name myBackendSubnet --subnet-prefixes 10.0.0.0/24 fd18:2885:e639::/64
 }
 
 function create_public_ip {
