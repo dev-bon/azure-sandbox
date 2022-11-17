@@ -208,6 +208,8 @@ function existing_vm {
 
 function check_vm {
     echo "⌛  Checking Previous VM..."
+    az webapp list --query "[].{hostName: defaultHostName, state: state}" --output tsv > WA.txt
+    [ -s WA.txt ] && bash -c "echo You Already Have Running Web App..." && existing_vm
     az vm list-ip-addresses -n myVM --output tsv > IP.txt
     [ -s IP.txt ] && bash -c "echo You Already Have Running VM... && az vm list-ip-addresses -n myVM --output table" && existing_vm
 }
