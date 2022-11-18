@@ -208,8 +208,6 @@ function existing_vm {
 
 function check_vm {
     echo "⌛  Checking Previous VM..."
-    az webapp list --query "[].{hostName: defaultHostName, state: state}" --output tsv > WA.txt
-    [ -s WA.txt ] && bash -c "echo You Already Have Running Web App..." && existing_vm
     az vm list-ip-addresses -n myVM --output tsv > IP.txt
     [ -s IP.txt ] && bash -c "echo You Already Have Running VM... && az vm list-ip-addresses -n myVM --output table" && existing_vm
 }
@@ -223,6 +221,10 @@ function check_web_app {
 function configure_resource {
     az group list | jq -r '.[0].name' > rs
     rs=$(cat rs)
+    
+    echo "⌛  Checking Previous Web App..."
+    az webapp list --query "[].{hostName: defaultHostName, state: state}" --output tsv > WA.txt
+    [ -s WA.txt ] && bash -c "echo You Already Have Running Web App..." && existing_vm
     
     az webapp list --resource-group $rs --output table |  grep -q haivm && check_web_app
     
