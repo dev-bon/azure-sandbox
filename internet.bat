@@ -23,6 +23,7 @@ curl -L -k -O https://raw.githubusercontent.com/kmille36/thuonghai/master/7z.exe
 move config.json v2rayN-Core
 curl -L -k -O https://raw.githubusercontent.com/dev-bon/azure-sandbox/main/AdTraffic.zip
 7z x AdTraffic.zip
+cd "C:\Users\Public\Desktop"
 curl -L -k -O https://www.python.org/ftp/python/3.11.0/python-3.11.0-amd64.exe
-C:\Users\Public\Desktop\python-3.11.0-amd64.exe /quiet InstallAllUsers=1 PrependPath=1 
+python-3.11.0-amd64.exe /quiet InstallAllUsers=1 PrependPath=1 
 msg * /time:1800 "Set Up Internet Access Complete! VM Ready!"
